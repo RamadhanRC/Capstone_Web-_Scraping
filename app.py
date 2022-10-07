@@ -50,9 +50,14 @@ Data_Film = pd.DataFrame(temp, columns = ('Title','IMDB_Rating','MetaScore','Vot
 #insert data wrangling here
 Data_Film[['IMDB_Rating','MetaScore']] = Data_Film[['IMDB_Rating','MetaScore']].astype('float64')
 Data_Film['Vote'] = Data_Film['Vote'].astype('int64')
+
+dfPopu=Data_Film.drop(['Vote'], axis = 1).head(7)
 dfRating=Data_Film.sort_values(by= 'IMDB_Rating', ascending=True).tail(7)
 dfScore=Data_Film.sort_values(by= 'MetaScore', ascending=True).tail(7)
 dfVote=Data_Film.sort_values(by= 'Vote', ascending=True).tail(7)
+
+X_Popu=dfPopu['Title']
+Y_Popu= dfPopu['IMDB_Rating']
 
 X_Rating=dfRating['Title']
 Y_Rating= dfRating['IMDB_Rating']
@@ -67,12 +72,20 @@ Y_Vote=Score=dfVote['Vote']
 
 @app.route("/")
 def index(): 
-	card_data = f'{Data_Film["IMDB_Rating"].mean().round(2)}' #be careful with the " and ' 
+	card_data = f'{Data_Film["IMDB_Rating"].mean()}' #be careful with the " and ' 
 	# generate plot
 	#ax = df.plot.barh(figsize = (20,9)) 
 	
 	# Rendering plot
 	# Do not change this
+	plt.clf()
+	plt.barh(X_Popu,Y_Popu)
+	figfile = BytesIO()
+	plt.savefig(figfile, format='png', transparent=True, bbox_inches='tight')
+	figfile.seek(0)
+	figdata_png = base64.b64encode(figfile.getvalue())
+	plot_popu = str(figdata_png)[2:-1]
+
 	plt.clf()
 	plt.barh(X_Rating,Y_Rating)
 	figfile = BytesIO()
@@ -99,7 +112,8 @@ def index():
 
 	# render to html
 	return render_template('index.html',
-		card_data = card_data, 
+		card_data = card_data,
+		plot_popu=plot_popu,
 		plot_rating=plot_rating,
 		plot_score=plot_score,
 		plot_vote=plot_vote
